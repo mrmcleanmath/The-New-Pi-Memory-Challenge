@@ -21,6 +21,7 @@
       --ok:#34e7a5;
       --bad:#ff5a7a;
       --gold:#ffd166;
+      --heart:#ff5a7a;
 
       --shadow: 0 18px 55px rgba(0,0,0,.50);
     }
@@ -80,13 +81,6 @@
       line-height:1;
       text-shadow: 0 10px 25px rgba(0,0,0,.55);
     }
-    .title .sub{
-      margin-top:10px;
-      color:var(--muted);
-      font-weight:700;
-      font-size:15px;
-      line-height:1.35;
-    }
 
     .hud{
       display:flex;
@@ -122,6 +116,29 @@
       font-size:18px;
       letter-spacing:0;
       text-transform:none;
+    }
+
+    .pill.level{
+      border-color: rgba(106,167,255,.35);
+    }
+    .pill.level b{
+      color: var(--accent);
+      font-size:18px;
+      letter-spacing:0;
+      text-transform:none;
+    }
+
+    .pill.hearts{
+      border-color: rgba(255,90,122,.35);
+      min-width: 120px;
+    }
+    .pill.hearts b{
+      color: var(--heart);
+      font-size:18px;
+      letter-spacing:0;
+      text-transform:none;
+      display:inline-block;
+      line-height:1;
     }
 
     .card{
@@ -253,6 +270,11 @@
       color: var(--bad);
       box-shadow: 0 0 0 4px rgba(255,90,122,.10);
     }
+    .status.levelup{
+      border-color: rgba(255,209,102,.40);
+      color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(255,209,102,.10);
+    }
 
     .pop{ animation: pop .22s ease-out; }
     @keyframes pop{
@@ -260,7 +282,38 @@
       to{ transform: scale(1); }
     }
 
-    /* ---- DROPDOWN VISIBILITY FIX ---- */
+    .levelBanner{
+      display:none;
+      margin-top:14px;
+      padding:16px 18px;
+      border-radius:18px;
+      border:1px solid rgba(255,209,102,.40);
+      background: linear-gradient(135deg, rgba(255,209,102,.18), rgba(139,92,255,.18));
+      box-shadow: 0 16px 36px rgba(0,0,0,.34), 0 0 20px rgba(255,209,102,.12);
+      text-align:center;
+      animation: bannerPop .35s ease-out;
+    }
+    .levelBanner.show{ display:block; }
+
+    .levelBanner .big{
+      font-size:26px;
+      font-weight:1000;
+      color:var(--gold);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .levelBanner .small{
+      margin-top:6px;
+      font-size:15px;
+      color:var(--text);
+      font-weight:800;
+    }
+
+    @keyframes bannerPop{
+      from{ transform: scale(.92); opacity:0; }
+      to{ transform: scale(1); opacity:1; }
+    }
+
     select{
       border-radius:14px;
       padding:10px 12px;
@@ -334,7 +387,6 @@
       margin-top:8px;
     }
 
-    /* ---------- RESULT IMAGE CARD ---------- */
     #shotTarget{
       width: 100%;
       max-width: 100%;
@@ -440,15 +492,11 @@
       padding:10px 8px 0;
     }
 
-    /* ---------- PI DIGITS PRACTICE SECTION ---------- */
     .practiceRow{
       margin-top:14px;
       display:grid;
       grid-template-columns: 1fr;
       gap:14px;
-    }
-    @media (min-width: 840px){
-      .practiceRow{ grid-template-columns: 1fr 1fr; }
     }
 
     details.practice{
@@ -490,7 +538,6 @@
       background: rgba(255,255,255,.05);
     }
 
-    /* Practice digits container */
     .digitsPracticeText{
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       font-size:16px;
@@ -510,7 +557,6 @@
       align-items:center;
     }
 
-    /* Highlight the last correct digit */
     .piChar{
       padding: 1px 2px;
       border-radius: 6px;
@@ -530,23 +576,24 @@
     <header>
       <div class="title">
         <h1>Pi Memory Challenge</h1>
-        <div class="sub" id="subtitle">Type one character at a time (no Enter). One mistake ends the run.</div>
       </div>
 
       <div class="hud">
         <div class="pill">Allowed: <b>0-9</b> <span>and</span> <b>.</b> <span>or</span> <b>,</b></div>
         <div class="pill score">Score: <b id="liveScore">0</b></div>
+        <div class="pill level" id="levelPill">Level: <b id="liveLevel">1</b></div>
+        <div class="pill hearts" id="heartsPill">Lives: <b id="livesDisplay">♥</b></div>
       </div>
     </header>
 
     <div class="card">
-      <div class="how">
-        Start with <b>3</b>, then <b>.</b> (or <b>,</b>), then keep going. The moment you enter a wrong character, the run ends and you can download your result image.
+      <div class="how" id="howText">
+        The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>1 life</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.
       </div>
 
       <div class="digitsBox" aria-live="polite">
         <span class="label">Your digits so far</span>
-        <span id="typedSoFar">-</span>
+        <span id="typedSoFar">3.</span>
       </div>
 
       <div class="controls">
@@ -559,6 +606,11 @@
         </select>
 
         <span id="status" class="status">Click Start to begin.</span>
+      </div>
+
+      <div id="levelBanner" class="levelBanner" aria-live="polite">
+        <div class="big" id="levelBannerBig">Level Up!</div>
+        <div class="small" id="levelBannerSmall">You reached Level 2 and gained +1 life.</div>
       </div>
 
       <div class="practiceRow">
@@ -576,24 +628,8 @@
                 <button id="toggleGroupingBtn">Toggle grouping</button>
               </div>
               <div class="small">
-                Tip: Grouping can make memorization easier (for example, blocks of 5).
+                Tip: Grouping can make memorization easier, for example blocks of 5.
               </div>
-            </div>
-          </div>
-        </details>
-
-        <details class="practice">
-          <summary>
-            Quick practice idea
-            <span class="chev">v</span>
-          </summary>
-          <div class="practiceBody">
-            A simple routine that works well:
-            <div class="small">
-              1) Read 10 digits aloud as a class.<br>
-              2) Close the digits panel.<br>
-              3) Students do a run and try to beat their previous score.<br>
-              4) Repeat once more at the end of the week and compare progress.
             </div>
           </div>
         </details>
@@ -603,8 +639,9 @@
         <div class="resultsGrid">
           <div class="panel">
             <h2>Result</h2>
-            <div class="kv"><b>Correct characters:</b> <span id="scoreChars">0</span></div>
             <div class="kv"><b>Digits after decimal:</b> <span id="scoreDigits">0</span></div>
+            <div class="kv"><b>Level reached:</b> <span id="scoreLevel">1</span></div>
+            <div class="kv"><b>Mistakes made:</b> <span id="scoreMistakes">0</span></div>
             <div class="kv"><b>Time:</b> <span id="timeStamp">-</span></div>
 
             <div class="kv" id="mistakeRow" style="display:none;">
@@ -629,6 +666,8 @@
                 <div>
                   <div class="brand">Pi Memory Challenge</div>
                   <div class="time" id="shotTime">-</div>
+                  <div class="time">Level: <span id="shotLevel">1</span></div>
+                  <div class="time">Mistakes: <span id="shotMistakes">0</span></div>
                 </div>
               </div>
 
@@ -668,21 +707,26 @@
       "72458700660631558817488152092096282925409171536436" +
       "78925903600113305305488204665213841469519415116094";
 
+    const START_TEXT = "3.";
+
     const typedSoFarEl = document.getElementById("typedSoFar");
     const charInput = document.getElementById("charInput");
     const startBtn = document.getElementById("startBtn");
     const statusEl = document.getElementById("status");
-    const subtitleEl = document.getElementById("subtitle");
+    const howTextEl = document.getElementById("howText");
 
     const resultsEl = document.getElementById("results");
-    const scoreCharsEl = document.getElementById("scoreChars");
     const scoreDigitsEl = document.getElementById("scoreDigits");
+    const scoreLevelEl = document.getElementById("scoreLevel");
+    const scoreMistakesEl = document.getElementById("scoreMistakes");
     const timeStampEl = document.getElementById("timeStamp");
     const liveScoreEl = document.getElementById("liveScore");
 
     const shotTimeEl = document.getElementById("shotTime");
     const shotScoreEl = document.getElementById("shotScore");
     const shotDigitsEl = document.getElementById("shotDigits");
+    const shotLevelEl = document.getElementById("shotLevel");
+    const shotMistakesEl = document.getElementById("shotMistakes");
 
     const downloadBtn = document.getElementById("downloadBtn");
     const copyBtn = document.getElementById("copyBtn");
@@ -700,15 +744,28 @@
     const copyPiBtn = document.getElementById("copyPiBtn");
     const toggleGroupingBtn = document.getElementById("toggleGroupingBtn");
 
-    let typed = "";
+    const levelPill = document.getElementById("levelPill");
+    const heartsPill = document.getElementById("heartsPill");
+    const liveLevelEl = document.getElementById("liveLevel");
+    const livesDisplayEl = document.getElementById("livesDisplay");
+
+    const levelBanner = document.getElementById("levelBanner");
+    const levelBannerBig = document.getElementById("levelBannerBig");
+    const levelBannerSmall = document.getElementById("levelBannerSmall");
+
+    let typed = START_TEXT;
     let playing = false;
     let finished = false;
 
-    let lastMistake = null; // { expected: string, typed: string, index: number }
+    let lastMistake = null;
     let groupedView = false;
-
-    // Stores the index we want to highlight in the practice panel (last correct digit)
     let highlightIndex = null;
+
+    let lives = 1;
+    let level = 1;
+    let highestLevelAwarded = 1;
+    let levelBannerTimer = null;
+    let mistakesMade = 0;
 
     function isDecimalSeparator(ch){
       return ch === "." || ch === ",";
@@ -731,9 +788,23 @@
       return Math.max(0, str.length - i - 1);
     }
 
+    function getCurrentDigitsCount(){
+      return digitsAfterDecimalCount(typed);
+    }
+
+    function getLevelFromDigits(digits){
+      return Math.floor(digits / 20) + 1;
+    }
+
+    function updateLivesDisplay(){
+      liveLevelEl.textContent = String(level);
+      livesDisplayEl.textContent = "♥".repeat(Math.max(0, lives));
+    }
+
     function updateUI(){
-      typedSoFarEl.textContent = typed.length ? typed : "-";
-      liveScoreEl.textContent = String(digitsAfterDecimalCount(typed));
+      typedSoFarEl.textContent = typed.length ? typed : START_TEXT;
+      liveScoreEl.textContent = String(getCurrentDigitsCount());
+      updateLivesDisplay();
     }
 
     function setStatus(text, kind){
@@ -742,6 +813,20 @@
       statusEl.classList.remove("pop");
       void statusEl.offsetWidth;
       statusEl.classList.add("pop");
+    }
+
+    function hideLevelBanner(){
+      levelBanner.classList.remove("show");
+    }
+
+    function showLevelBannerNow(newLevel){
+      if(levelBannerTimer) clearTimeout(levelBannerTimer);
+      levelBannerBig.textContent = "Level Up!";
+      levelBannerSmall.textContent = "You reached Level " + newLevel + " and gained +1 life.";
+      levelBanner.classList.add("show");
+      levelBannerTimer = setTimeout(() => {
+        levelBanner.classList.remove("show");
+      }, 1800);
     }
 
     function clearMistake(){
@@ -761,7 +846,6 @@
     }
 
     function applyPracticeHighlight(scrollIfPossible){
-      // Remove any previous highlight
       const prev = piDigitsTextEl.querySelector(".piChar.stopMark");
       if(prev) prev.classList.remove("stopMark");
 
@@ -772,35 +856,39 @@
 
       target.classList.add("stopMark");
 
-      // Only scroll if the details pane is open (otherwise scrolling can be weird)
       if(scrollIfPossible && practiceDetails.open){
         try{
           target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-        }catch(e){
-          // ignore
-        }
+        }catch(e){}
       }
     }
 
-    function setModeTextForRunning(){
+    function setRunningText(){
       if(inputModeSel.value === "enter"){
-        subtitleEl.textContent = "Type one character at a time, then press Enter. One mistake ends the run.";
-        setStatus("Go! Type the next character and press Enter.", "");
-      }else{
-        subtitleEl.textContent = "Type one character at a time (no Enter). One mistake ends the run.";
-        setStatus("Go! Type the next character.", "");
+        setStatus("Type the next character and press Enter.", "");
+      } else {
+        setStatus("Type the next character.", "");
       }
+
+      howTextEl.innerHTML = 'The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>1 life</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.';
     }
 
     function resetGame(){
-      typed = "";
+      typed = START_TEXT;
       playing = true;
       finished = false;
       resultsEl.style.display = "none";
 
+      lives = 1;
+      level = 1;
+      highestLevelAwarded = 1;
+      mistakesMade = 0;
+
       clearMistake();
       clearPracticeHighlight();
-      renderPiPractice(); // refresh practice panel to clear highlight in DOM
+      renderPiPractice();
+
+      hideLevelBanner();
 
       charInput.value = "";
       charInput.disabled = false;
@@ -810,30 +898,34 @@
       copyBtn.disabled = true;
 
       updateUI();
-      setModeTextForRunning();
+      setRunningText();
     }
 
     function endGame(message){
       playing = false;
       finished = true;
       charInput.disabled = true;
+      hideLevelBanner();
 
-      const digitsCount = digitsAfterDecimalCount(typed);
+      const digitsCount = getCurrentDigitsCount();
       const now = new Date();
       const stamp = now.toLocaleString();
 
-      scoreCharsEl.textContent = String(typed.length);
       scoreDigitsEl.textContent = String(digitsCount);
+      scoreLevelEl.textContent = String(level);
+      scoreMistakesEl.textContent = String(mistakesMade);
       timeStampEl.textContent = stamp;
 
       shotTimeEl.textContent = stamp;
       shotScoreEl.textContent = String(digitsCount);
-      shotDigitsEl.textContent = typed.length ? typed : "-";
+      shotDigitsEl.textContent = typed.length ? typed : START_TEXT;
+      shotLevelEl.textContent = String(level);
+      shotMistakesEl.textContent = String(mistakesMade);
 
       if(lastMistake){
         const expDisp = normalizeExpected(lastMistake.expected);
         const typedDisp = lastMistake.typed === "" ? "(blank)" : lastMistake.typed;
-        const msg = 'Typed "' + typedDisp + '" but expected "' + expDisp + '" (position ' + (lastMistake.index + 1) + ").";
+        const msg = 'Typed "' + typedDisp + '" but expected "' + expDisp + '" (position ' + (lastMistake.index + 1) + ').';
         mistakeInfoEl.textContent = msg;
         mistakeRow.style.display = "block";
 
@@ -846,14 +938,12 @@
         shotMistakeEl.style.display = "none";
       }
 
-      // Set highlight to last correct digit (typed.length - 1)
       if(typed.length > 0){
         highlightIndex = typed.length - 1;
       }else{
         highlightIndex = null;
       }
 
-      // Re-render practice panel (so we have spans) and apply highlight
       renderPiPractice();
       applyPracticeHighlight(false);
 
@@ -875,6 +965,24 @@
       return false;
     }
 
+    function handleLevelProgress(){
+      const digitsCount = getCurrentDigitsCount();
+      const newLevel = getLevelFromDigits(digitsCount);
+
+      if(newLevel > highestLevelAwarded){
+        for(let lv = highestLevelAwarded + 1; lv <= newLevel; lv++){
+          lives += 1;
+          level = lv;
+          highestLevelAwarded = lv;
+          updateUI();
+          showLevelBannerNow(lv);
+          setStatus("Level up! You reached Level " + lv + " and gained +1 life.", "levelup");
+        }
+      }else{
+        level = newLevel;
+      }
+    }
+
     function checkAndAppendChar(ch){
       if(!playing || finished) return;
 
@@ -894,15 +1002,30 @@
       if(ok){
         typed += ch;
         updateUI();
-        setStatus("Correct!", "ok");
+
+        handleLevelProgress();
+        if(!levelBanner.classList.contains("show")){
+          setStatus("Correct!", "ok");
+        }
 
         if(typed.length >= PI.length){
           endGame("Finished! You reached the end of the stored digits.");
         }
       } else {
         recordMistake(exp, ch, typed.length);
-        const expDisp = normalizeExpected(exp);
-        endGame('Wrong. The correct character was "' + expDisp + '".');
+        mistakesMade += 1;
+        lives -= 1;
+        updateLivesDisplay();
+
+        if(lives > 0){
+          setStatus("Mistake! Lives left: " + lives + ". Try again.", "bad");
+          charInput.value = "";
+          charInput.focus();
+          return;
+        } else {
+          const expDisp = normalizeExpected(exp);
+          endGame('No lives left. Game over. The correct character was "' + expDisp + '".');
+        }
       }
     }
 
@@ -915,7 +1038,6 @@
       checkAndAppendChar(ch);
     }
 
-    // Enter mode: press Enter to submit the single character
     charInput.addEventListener("keydown", (e) => {
       if(inputModeSel.value !== "enter") return;
       if(e.key !== "Enter") return;
@@ -928,7 +1050,6 @@
       handleSingleCharInput(ch);
     });
 
-    // Instant mode: submit as soon as a single character is typed
     charInput.addEventListener("input", () => {
       if(inputModeSel.value !== "instant") return;
       if(!playing || finished) return;
@@ -944,22 +1065,16 @@
     });
 
     inputModeSel.addEventListener("change", () => {
-      if(inputModeSel.value === "enter"){
-        subtitleEl.textContent = "Type one character at a time, then press Enter. One mistake ends the run.";
-        if(playing && !finished) setStatus("Enter mode: type the next character and press Enter.", "");
-      } else {
-        subtitleEl.textContent = "Type one character at a time (no Enter). One mistake ends the run.";
-        if(playing && !finished) setStatus("Instant mode: type the next character.", "");
+      if(playing && !finished){
+        setRunningText();
       }
       if(playing && !finished && !charInput.disabled) charInput.focus();
     });
 
     startBtn.addEventListener("click", resetGame);
 
-    // If the practice panel is opened, scroll the highlight into view
     practiceDetails.addEventListener("toggle", () => {
       if(practiceDetails.open){
-        // small delay helps some browsers layout the open panel
         setTimeout(() => applyPracticeHighlight(true), 50);
       }
     });
@@ -1018,9 +1133,7 @@
       }
     });
 
-    // --------- Practice digits rendering (with spans + optional grouping) ----------
     function renderPiPractice(){
-      // Rebuild the entire practice display as DOM nodes so we can highlight by index.
       piDigitsTextEl.innerHTML = "";
 
       let idx = 0;
@@ -1042,11 +1155,6 @@
           addCharSpan(PI[i], i);
         }
       } else {
-        // Grouping format:
-        // - Keep "3." together
-        // - Then digits after decimal grouped in blocks of 5, spaces between blocks
-        // - 10 blocks per line
-
         if(PI.length >= 2){
           addCharSpan(PI[0], 0);
           addCharSpan(PI[1], 1);
@@ -1078,17 +1186,14 @@
         }
       }
 
-      // Apply highlight after render
       applyPracticeHighlight(false);
     }
 
     function getPiPracticeText(){
-      // For copy button. Keep it simple: copy either raw PI or grouped text (no spans).
       if(!groupedView) return PI;
 
-      // grouped plain text version
       if(PI.length < 3) return PI;
-      const head = PI.slice(0,2); // "3."
+      const head = PI.slice(0,2);
       const rest = PI.slice(2);
 
       const blocks = [];
@@ -1132,10 +1237,9 @@
     });
 
     (function init(){
-      // Default: Instant mode
       inputModeSel.value = "instant";
-      subtitleEl.textContent = "Type one character at a time (no Enter). One mistake ends the run.";
 
+      typed = START_TEXT;
       charInput.disabled = true;
       downloadBtn.disabled = true;
       copyBtn.disabled = true;
