@@ -491,81 +491,6 @@
       font-weight:900;
       padding:10px 8px 0;
     }
-
-    .practiceRow{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-    }
-
-    details.practice{
-      border:1px solid rgba(255,255,255,.16);
-      border-radius:20px;
-      background: linear-gradient(180deg, rgba(10,16,32,.70), rgba(12,18,40,.55));
-      box-shadow: 0 16px 36px rgba(0,0,0,.38);
-      overflow:hidden;
-    }
-    details.practice summary{
-      cursor:pointer;
-      list-style:none;
-      padding:14px;
-      user-select:none;
-      font-weight:1000;
-      letter-spacing:.05em;
-      text-transform:uppercase;
-      color:rgba(244,247,255,.95);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-    details.practice summary::-webkit-details-marker{ display:none; }
-    .chev{ opacity:.85; font-weight:1000; }
-    details.practice[open] .chev{ transform: rotate(180deg); }
-
-    .practiceBody{
-      padding:0 14px 14px;
-      color:var(--muted);
-      font-weight:700;
-      line-height:1.35;
-    }
-    .digitsPracticeBox{
-      margin-top:10px;
-      border:1px solid rgba(255,255,255,.16);
-      border-radius:16px;
-      padding:12px;
-      background: rgba(255,255,255,.05);
-    }
-
-    .digitsPracticeText{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      font-size:16px;
-      line-height:1.4;
-      overflow:auto;
-      max-height:260px;
-      white-space:pre-wrap;
-      overflow-wrap:anywhere;
-      color:rgba(244,247,255,.95);
-    }
-
-    .miniControls{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .piChar{
-      padding: 1px 2px;
-      border-radius: 6px;
-    }
-    .piChar.stopMark{
-      background: rgba(255, 209, 102, .22);
-      outline: 2px solid rgba(255, 209, 102, .70);
-      box-shadow: 0 0 0 3px rgba(255, 209, 102, .10);
-    }
   </style>
 </head>
 
@@ -579,16 +504,15 @@
       </div>
 
       <div class="hud">
-        <div class="pill">Allowed: <b>0-9</b> <span>and</span> <b>.</b> <span>or</span> <b>,</b></div>
         <div class="pill score">Score: <b id="liveScore">0</b></div>
         <div class="pill level" id="levelPill">Level: <b id="liveLevel">1</b></div>
-        <div class="pill hearts" id="heartsPill">Lives: <b id="livesDisplay">♥</b></div>
+        <div class="pill hearts" id="heartsPill">Lives: <b id="livesDisplay">♥♥</b></div>
       </div>
     </header>
 
     <div class="card">
       <div class="how" id="howText">
-        The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>1 life</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.
+        The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>2 lives</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.
       </div>
 
       <div class="digitsBox" aria-live="polite">
@@ -611,28 +535,6 @@
       <div id="levelBanner" class="levelBanner" aria-live="polite">
         <div class="big" id="levelBannerBig">Level Up!</div>
         <div class="small" id="levelBannerSmall">You reached Level 2 and gained +1 life.</div>
-      </div>
-
-      <div class="practiceRow">
-        <details class="practice" id="practiceDetails">
-          <summary>
-            Pi digits (practice here)
-            <span class="chev">v</span>
-          </summary>
-          <div class="practiceBody">
-            This list is built into the app. After a run ends, the last correct digit will be highlighted so students can see what they need to beat.
-            <div class="digitsPracticeBox">
-              <div class="digitsPracticeText" id="piDigitsText">Loading pi digits...</div>
-              <div class="miniControls">
-                <button id="copyPiBtn">Copy pi digits</button>
-                <button id="toggleGroupingBtn">Toggle grouping</button>
-              </div>
-              <div class="small">
-                Tip: Grouping can make memorization easier, for example blocks of 5.
-              </div>
-            </div>
-          </div>
-        </details>
       </div>
 
       <div id="results" class="results">
@@ -739,13 +641,6 @@
     const shotMistakeTitle = document.getElementById("shotMistakeTitle");
     const shotMistakeEl = document.getElementById("shotMistake");
 
-    const practiceDetails = document.getElementById("practiceDetails");
-    const piDigitsTextEl = document.getElementById("piDigitsText");
-    const copyPiBtn = document.getElementById("copyPiBtn");
-    const toggleGroupingBtn = document.getElementById("toggleGroupingBtn");
-
-    const levelPill = document.getElementById("levelPill");
-    const heartsPill = document.getElementById("heartsPill");
     const liveLevelEl = document.getElementById("liveLevel");
     const livesDisplayEl = document.getElementById("livesDisplay");
 
@@ -758,10 +653,8 @@
     let finished = false;
 
     let lastMistake = null;
-    let groupedView = false;
-    let highlightIndex = null;
 
-    let lives = 1;
+    let lives = 2;
     let level = 1;
     let highestLevelAwarded = 1;
     let levelBannerTimer = null;
@@ -839,30 +732,6 @@
       shotMistakeEl.textContent = "-";
     }
 
-    function clearPracticeHighlight(){
-      highlightIndex = null;
-      const prev = piDigitsTextEl.querySelector(".piChar.stopMark");
-      if(prev) prev.classList.remove("stopMark");
-    }
-
-    function applyPracticeHighlight(scrollIfPossible){
-      const prev = piDigitsTextEl.querySelector(".piChar.stopMark");
-      if(prev) prev.classList.remove("stopMark");
-
-      if(highlightIndex === null || highlightIndex < 0) return;
-
-      const target = piDigitsTextEl.querySelector('[data-i="' + highlightIndex + '"]');
-      if(!target) return;
-
-      target.classList.add("stopMark");
-
-      if(scrollIfPossible && practiceDetails.open){
-        try{
-          target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
-        }catch(e){}
-      }
-    }
-
     function setRunningText(){
       if(inputModeSel.value === "enter"){
         setStatus("Type the next character and press Enter.", "");
@@ -870,7 +739,7 @@
         setStatus("Type the next character.", "");
       }
 
-      howTextEl.innerHTML = 'The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>1 life</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.';
+      howTextEl.innerHTML = 'The game starts with <b>3.</b> already shown. Type one character at a time and keep going as long as you can. You begin with <b>2 lives</b>, gain <b>+1 life every 20 digits</b>, and each mistake costs <b>1 life</b>. If you still have a life left, try that digit again.';
     }
 
     function resetGame(){
@@ -879,15 +748,12 @@
       finished = false;
       resultsEl.style.display = "none";
 
-      lives = 1;
+      lives = 2;
       level = 1;
       highestLevelAwarded = 1;
       mistakesMade = 0;
 
       clearMistake();
-      clearPracticeHighlight();
-      renderPiPractice();
-
       hideLevelBanner();
 
       charInput.value = "";
@@ -937,15 +803,6 @@
         shotMistakeTitle.style.display = "none";
         shotMistakeEl.style.display = "none";
       }
-
-      if(typed.length > 0){
-        highlightIndex = typed.length - 1;
-      }else{
-        highlightIndex = null;
-      }
-
-      renderPiPractice();
-      applyPracticeHighlight(false);
 
       resultsEl.style.display = "block";
       downloadBtn.disabled = false;
@@ -1073,12 +930,6 @@
 
     startBtn.addEventListener("click", resetGame);
 
-    practiceDetails.addEventListener("toggle", () => {
-      if(practiceDetails.open){
-        setTimeout(() => applyPracticeHighlight(true), 50);
-      }
-    });
-
     async function makeShotCanvas(){
       await new Promise(r => setTimeout(r, 60));
       return await html2canvas(shotTarget, {
@@ -1133,109 +984,6 @@
       }
     });
 
-    function renderPiPractice(){
-      piDigitsTextEl.innerHTML = "";
-
-      let idx = 0;
-
-      function addCharSpan(ch, i){
-        const span = document.createElement("span");
-        span.className = "piChar";
-        span.textContent = ch;
-        span.setAttribute("data-i", String(i));
-        piDigitsTextEl.appendChild(span);
-      }
-
-      function addText(t){
-        piDigitsTextEl.appendChild(document.createTextNode(t));
-      }
-
-      if(!groupedView){
-        for(let i=0;i<PI.length;i++){
-          addCharSpan(PI[i], i);
-        }
-      } else {
-        if(PI.length >= 2){
-          addCharSpan(PI[0], 0);
-          addCharSpan(PI[1], 1);
-          addText("\n");
-          idx = 2;
-        }
-
-        let blocksOnLine = 0;
-        let digitsInBlock = 0;
-
-        while(idx < PI.length){
-          addCharSpan(PI[idx], idx);
-          idx++;
-          digitsInBlock++;
-
-          if(digitsInBlock === 5){
-            digitsInBlock = 0;
-            blocksOnLine++;
-
-            if(idx < PI.length){
-              if(blocksOnLine === 10){
-                addText("\n");
-                blocksOnLine = 0;
-              } else {
-                addText(" ");
-              }
-            }
-          }
-        }
-      }
-
-      applyPracticeHighlight(false);
-    }
-
-    function getPiPracticeText(){
-      if(!groupedView) return PI;
-
-      if(PI.length < 3) return PI;
-      const head = PI.slice(0,2);
-      const rest = PI.slice(2);
-
-      const blocks = [];
-      for(let i=0;i<rest.length;i+=5){
-        blocks.push(rest.slice(i, i+5));
-      }
-
-      const lines = [];
-      for(let i=0;i<blocks.length;i+=10){
-        lines.push(blocks.slice(i, i+10).join(" "));
-      }
-
-      return head + "\n" + lines.join("\n");
-    }
-
-    copyPiBtn.addEventListener("click", async () => {
-      try{
-        const txt = getPiPracticeText();
-        if(navigator.clipboard && navigator.clipboard.writeText){
-          await navigator.clipboard.writeText(txt);
-          setStatus("Copied pi digits.", "ok");
-        }else{
-          const ta = document.createElement("textarea");
-          ta.value = txt;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand("copy");
-          ta.remove();
-          setStatus("Copied pi digits.", "ok");
-        }
-      }catch(e){
-        alert("Copy failed on this device/browser.");
-        console.error(e);
-      }
-    });
-
-    toggleGroupingBtn.addEventListener("click", () => {
-      groupedView = !groupedView;
-      renderPiPractice();
-      setStatus(groupedView ? "Grouped view on." : "Grouped view off.", "");
-    });
-
     (function init(){
       inputModeSel.value = "instant";
 
@@ -1243,9 +991,9 @@
       charInput.disabled = true;
       downloadBtn.disabled = true;
       copyBtn.disabled = true;
+      lives = 2;
 
       updateUI();
-      renderPiPractice();
       setStatus("Click Start to begin.", "");
     })();
   </script>
